@@ -74,22 +74,7 @@ class RandomUserAgentMiddleware(object):
         user_agent = self.ua.get_user_agent()
         # spider.logger.info('Spider Set User-Agent: %s' % user_agent)
         request.headers.setdefault('User-Agent', user_agent)
-
-    # def __init__(self, user_agent=''):
-    #     self.user_agent = user_agent
-    #
-    # @classmethod
-    # def from_crawler(cls, crawler):
-    #     return cls(
-    #         user_agent=crawler.settings.get('FAKE_USER_AGENT')
-    #     )
-    #
-    # def process_request(self, request, spider):
-    #     agent = random.choice(self.user_agent)
-    #     try:
-    #         request.headers.setdefault('User-Agent', agent)
-    #     except Exception as e:
-    #         print(e)
+        # request.headers.setdefault('Referer', 'http://music.163.com/song?id={}'.format(song_id),)
 
 
 class RandomProxyMiddleware(object):

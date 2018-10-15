@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import pymongo
 
 client = pymongo.MongoClient(host='210.38.224.115', port=27017)

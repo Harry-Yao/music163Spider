@@ -33,18 +33,29 @@ class CommentSpider(RedisSpider):
     #         callback=self.parse_comments,
     #     )
 
+    headers = {
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Encoding': 'gzip,deflate',
+        'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+        'Cookie': 'appver=1.5.0.75771;',
+        'Host': 'music.163.com',
+        'Origin': 'http://music.163.com',
+    }
+
     # 获取歌手专辑列表
     def parse(self, response):
         artist_list = response.xpath('//li/a[contains(@class,"nm")]/@href | //a[@class="msk"]/@href').extract()
         i = 1
         for artist_id in artist_list:
             artist_id = re.findall(r'\d+', artist_id)[0]
-            print(f'http://music.163.com/artist/album?id={artist_id}', i)
-            i += 1
+            # print(f'http://music.163.com/artist/album?id={artist_id}', i)
+            # i += 1
+            self.headers['Referer'] = f'http://music.163.com/artist/album?id={artist_id}'
             yield scrapy.Request(
                 f'http://music.163.com/artist/album?id={artist_id}',
                 callback=self.parse_artist,
                 # meta={'artist_id': artist_id},WORKON
+                headers=self.headers,
                 priority=1
             )
 
@@ -56,26 +67,28 @@ class CommentSpider(RedisSpider):
             for url in album_urls:
                 url = f'http://music.163.com{url}'
                 print(url)
-                yield scrapy.Request(url, callback=self.parse_songs, priority=2)
+                self.headers['Referer'] = url
+                yield scrapy.Request(url, headers=self.headers, callback=self.parse_songs, priority=2)
         # else:
         #     print("could not find album")
         if next_page and next_page != 'javascript:void(0)':
             url = parse.urljoin(next_page, base_url)
             print(url)
-            yield scrapy.Request(url, callback=self.parse_artist, priority=1)
+            self.headers['Referer'] = url
+            yield scrapy.Request(url, headers=self.headers, callback=self.parse_artist, priority=1)
 
     # 提交表单请求歌曲评论
     def parse_songs(self, response):
-        json_data = response.xpath('//textarea[contains(@style,"display:none;")]/text()').extract_first()
+        json_data = response.xpath('//textarea[@id="song-list-pre-data"]/text()').extract_first()
         song_list = json.loads(json_data)
         text = {'rid': '', 'offset': 1, 'total': 'false', 'limit': 100, 'csrf_token': ''}
-        post_data = get_data(text)
+        post_params = get_data(text)
         for song in song_list:
             post_url = f'http://music.163.com/weapi/v1/resource/comments/{song["commentThreadId"]}/?csrf_token='
             print(post_url)
             yield FormRequest(
                 url=post_url,
-                formdata=post_data,
+                formdata=post_params,
                 callback=self.parse_comments,
                 meta={'song': song},
                 priority=3
@@ -112,17 +125,19 @@ class CommentSpider(RedisSpider):
                 text['offset'] = offset
                 post_url = f'http://music.163.com/weapi/v1/resource/comments/{song["commentThreadId"]}/?csrf_token='
                 print(post_url)
+                self.headers['Referer'] = f'http://music.163.com/song?id={song["id"]}'
                 yield FormRequest(
                     url=post_url,
+                    headers=self.headers,
                     formdata=get_data(text),
                     callback=self.parse_total_comments,
-                    meta={'song': song},
+                    meta={'song_id': song["id"]},
                     priority=3
                 )
 
     def parse_total_comments(self, response):
         json_dict = json.loads(response.text)
-        song = response.meta.get("song", "")
+        song_id = response.meta.get("song_id", "")
 
         # 获取所有评论
         if json_dict['comments']:
@@ -132,12 +147,11 @@ class CommentSpider(RedisSpider):
                 comment_item['comment_id'] = comment['commentId']
                 comment_item['user_id'] = comment['user']['userId']
                 comment_item['nickname'] = comment['user']['nickname']
-                comment_item['song_id'] = song['id']
+                comment_item['song_id'] = song_id
                 comment_item['content'] = comment['content']
                 comment_item['likedCount'] = comment['likedCount']
-                timestamp = int(comment['time']) / 1000
-                comment_time = datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
-                comment_item['add_time'] = comment_time
+                comment_item['add_time'] = datetime.fromtimestamp(int(comment['time'])/1000)\
+                    .strftime('%Y-%m-%d %H:%M:%S')
                 yield comment_item
 
 

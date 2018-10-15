@@ -53,8 +53,9 @@ DEFAULT_REQUEST_HEADERS = {
     'DNT': '1',
     'Host': 'music.163.com',
     'Pragma': 'no-cache',
-    'Referer': 'http://music.163.com/',
+    # 'Referer': 'http://music.163.com/',
     'Upgrade-Insecure-Requests': '1',
+    'Origin': 'http://music.163.com',
 }
 
 # Enable or disable spider middlewares

@@ -19,7 +19,7 @@ class CommentSpider(scrapy.Spider):
     }
 
     def start_requests(self):
-        url = 'http://music.163.com/#/discover/artist/cat?id=1001&initial=66'
+        url = 'http://music.163.com/discover/artist/cat?id=1001&initial=66'
         yield scrapy.Request(url, callback=self.parse)
 
     # 获取歌手专辑列表
@@ -39,8 +39,8 @@ class CommentSpider(scrapy.Spider):
         else:
             page = int(page[-1])
         for i in range(page):
-            url = 'http://music.163.com/artist/album?id=6452&limit=12&offset=' + str((i+1)*12) # + response.meta['artist_id'] \
-                  # + '&limit=12&offset=' + str((i+1)*12)
+            url = 'http://music.163.com/artist/album?id=6452&limit=12&offset=' + str((i+1)*12)
+                  # + response.meta['artist_id'] + '&limit=12&offset=' + str((i+1)*12)
             yield scrapy.Request(url, callback=self.parse_album)
 
     # 获取歌曲列表

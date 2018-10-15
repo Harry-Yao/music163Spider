@@ -49,7 +49,6 @@ class MongoPipeline(object):
 #     def __init__(self, dbpool):
 #         self.dbpool = dbpool
 #
-#
 #     @classmethod
 #     def from_settings(cls, settings):
 #         dbparam = dict(

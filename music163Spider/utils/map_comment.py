@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import jieba
 from PIL import Image
 from wordcloud import WordCloud, ImageColorGenerator
